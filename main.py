@@ -3,6 +3,7 @@ from langchain.agents import tool
 from langchain_openai import ChatOpenAI
 from langchain.prompts import PromptTemplate
 from langchain.tools.render import render_text_description
+from langchain.agents.output_parsers import ReActSingleInputOutputParser
 
 
 load_dotenv()
@@ -41,7 +42,13 @@ if __name__ == "__main__":
 
     prompt = PromptTemplate.from_template(template=template).partial(
         tools=render_text_description(tools),
-        tool_names=", ".join([t.__name__ for t in tools]),
+        tool_names=", ".join([t.name for t in tools]),
     )
 
-    llm = ChatOpenAI(temperature=0, stop=["\nObservation"])
+    llm = ChatOpenAI(temperature=0)
+    agent = (
+        {"input": lambda x: x["input"]} | prompt | llm | ReActSingleInputOutputParser()
+    )
+
+    res = agent.invoke({"input": "What is the length 'DOG' in characters?"})
+    print(res)
