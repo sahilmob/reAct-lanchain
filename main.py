@@ -69,26 +69,30 @@ if __name__ == "__main__":
         | ReActSingleInputOutputParser()
     )
 
-    agent_step: Union[AgentAction, AgentFinish] = agent.invoke(
-        {
-            "input": "What is the length in characters of the text DOG?",
-            "agent_scratchpad": intermediate_steps,
-        }
-    )
+    agent_step = ""
 
-    if isinstance(agent_step, AgentAction):
-        tool_name = agent_step.tool
-        tool_to_use = find_tool_by_name(tools, tool_name)
-        tool_input = agent_step.tool_input
-
-        observation = tool_to_use.func(str(tool_input))
-        print(f"{observation=}")
-        intermediate_steps.append((agent_step, str(observation)))
+    while not isinstance(agent_step, AgentFinish):
         agent_step: Union[AgentAction, AgentFinish] = agent.invoke(
             {
                 "input": "What is the length in characters of the text DOG?",
                 "agent_scratchpad": intermediate_steps,
             }
         )
+
+        if isinstance(agent_step, AgentAction):
+            tool_name = agent_step.tool
+            tool_to_use = find_tool_by_name(tools, tool_name)
+            tool_input = agent_step.tool_input
+
+            observation = tool_to_use.func(str(tool_input))
+            print(f"{observation=}")
+            intermediate_steps.append((agent_step, str(observation)))
+            agent_step: Union[AgentAction, AgentFinish] = agent.invoke(
+                {
+                    "input": "What is the length in characters of the text DOG?",
+                    "agent_scratchpad": intermediate_steps,
+                }
+            )
+
     if isinstance(agent_step, AgentFinish):
         print(agent_step.return_values)
